@@ -5,6 +5,7 @@ import aiomysql
 import jinja2
 import jinja2_sanic
 
+
 from sanic import Sanic
 from sanic.response import HTTPResponse, redirect
 
@@ -27,6 +28,12 @@ _config = {
     'db_database': os.environ.get('ISHOCON2_DB_NAME', 'ishocon2'),
 }
 
+# profile switch
+# profile = lambda x: x
+"""
+$ kernprof -l app.py
+$ python -m line_profiler app.py.lprof > profile_result.log
+"""
 
 def render_template(template_name, request, **kwargs):
     return jinja2_sanic.render_template(template_name, request, context=kwargs)
@@ -40,6 +47,7 @@ def config(key):
 
 
 @app.listener('before_server_start')
+@profile
 async def mysql_start(_app, loop):
     pool = await aiomysql.create_pool(**{
             'host': config('db_host'),
@@ -55,17 +63,20 @@ async def mysql_start(_app, loop):
 
 
 @app.listener('before_server_stop')
+@profile
 async def mysql_stop(_app, loop):
     _app.mysql.close()
     await _app.mysql.wait_closed()
 
 
 @app.middleware('response')
+@profile
 async def halt_response(request, response):
     if hasattr(request, 'db'):
         request.db.close()
 
 
+@profile
 async def get_election_results():
     async with app.mysql.acquire() as conn:
         async with conn.cursor() as cur:
@@ -82,6 +93,7 @@ async def get_election_results():
             return await cur.fetchall()
 
 
+@profile
 async def get_voice_of_supporter(candidate_ids):
     async with app.mysql.acquire() as conn:
         async with conn.cursor() as cur:
@@ -98,6 +110,7 @@ async def get_voice_of_supporter(candidate_ids):
             return [r['keyword'] for r in records]
 
 
+@profile
 async def get_all_party_name():
     async with app.mysql.acquire() as conn:
         async with conn.cursor() as cur:
@@ -106,6 +119,7 @@ async def get_all_party_name():
             return [r['political_party'] for r in records]
 
 
+@profile
 async def get_candidate_by_id(candidate_id):
     async with app.mysql.acquire() as conn:
         async with conn.cursor() as cur:
@@ -113,6 +127,7 @@ async def get_candidate_by_id(candidate_id):
             return await cur.fetchone()
 
 
+@profile
 async def db_initialize():
     async with app.mysql.acquire() as conn:
         async with conn.cursor() as cur:
@@ -120,11 +135,13 @@ async def db_initialize():
 
 
 @app.route('/favicon.ico')
+@profile
 async def get_index(request):
     return HTTPResponse('')
 
 
 @app.route('/')
+@profile
 async def get_index(request):
     candidates = []
     election_results = await get_election_results()
@@ -155,6 +172,7 @@ async def get_index(request):
 
 
 @app.route('/candidates/<candidate_id:int>')
+@profile
 async def get_candidate(request, candidate_id):
     async with app.mysql.acquire() as conn:
         async with conn.cursor() as cur:
@@ -174,6 +192,7 @@ async def get_candidate(request, candidate_id):
 
 
 @app.route('/political_parties/<name:string>')
+@profile
 async def get_political_party(request, name):
     async with app.mysql.acquire() as conn:
         async with conn.cursor() as cur:
@@ -195,6 +214,7 @@ async def get_political_party(request, name):
 
 
 @app.route('/vote')
+@profile
 async def get_vote(request):
     async with app.mysql.acquire() as conn:
         async with conn.cursor() as cur:
@@ -207,6 +227,7 @@ async def get_vote(request):
 
 
 @app.route('/vote', methods=['POST'])
+@profile
 async def post_vote(request):
     async with app.mysql.acquire() as conn:
         async with conn.cursor() as cur:
@@ -243,6 +264,7 @@ async def post_vote(request):
 
 
 @app.route('/initialize')
+@profile
 async def get_initialize(request):
     await db_initialize()
     return HTTPResponse('init')
@@ -250,3 +272,4 @@ async def get_initialize(request):
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080, workers=1, access_log=True)
+
