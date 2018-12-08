@@ -1,0 +1,68 @@
+{% extends "layout.html" %}
+{% block body %}
+<div class="jumbotron">
+  <div class="container">
+    <h1>選挙の結果を大発表！</h1>
+  </div>
+</div>
+<div class="container">
+  <h2>個人の部</h2>
+  <div id="people" class="row">
+    {% for candidate in candidates %}
+      <div class="col-md-3">
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            {% if loop.index0 < 10 %}
+              <p>{{ loop.index }}. <a href="/candidates/{{ candidate.id }}">{{ candidate.name }}</a></p>
+            {% else %}
+              <p>最下位. <a href="/candidates/{{ candidate.id }}">{{ candidate.name }}</a></p>
+            {% endif %}
+          </div>
+          <div class="panel-body">
+            <p>得票数: {{ candidate.count or 0 }}</p>
+            <p>政党: {{ candidate.political_party }}</p>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+  <h2>政党の部</h2>
+  <div id="parties" class="row">
+    {% for party in parties %}
+      <div class="col-md-3">
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <p>{{ loop.index }}. <a href="/political_parties/{{ party[0] }}">{{ party[0] }}</a></p>
+          </div>
+          <div class="panel-body">
+            <p>得票数: {{ party[1] }}</p>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+  <h2>男女比率</h2>
+  <div id="sex_ratio" class="row">
+    <div class="col-md-6">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <p>男性</p>
+        </div>
+        <div class="panel-body">
+          <p>得票数: {{ sex_ratio.men }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <p>女性</p>
+        </div>
+        <div class="panel-body">
+          <p>得票数: {{ sex_ratio.women }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
