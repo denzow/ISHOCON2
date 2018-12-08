@@ -264,4 +264,4 @@ async def get_initialize(req, resp):
 
 
 if __name__ == '__main__':
-    api.run(address='0.0.0.0', port=8080, debug=True)
+    api.run(address='0.0.0.0', port=8080)
